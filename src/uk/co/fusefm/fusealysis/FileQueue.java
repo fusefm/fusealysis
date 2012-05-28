@@ -1,9 +1,6 @@
 package uk.co.fusefm.fusealysis;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -15,7 +12,8 @@ import java.util.HashMap;
 public class FileQueue {
 
     private Connection dbConn;
-    private int currentTrackID, currentInTime, currentOutTime;
+    private int currentTrackID;
+    private double currentInTime, currentOutTime;
     private HashMap<Integer, String> analysisFiles;
     private ArrayList<Integer> analysisIDs;
 
@@ -82,7 +80,7 @@ public class FileQueue {
      *
      * @param inTime
      */
-    public void setInPoint(int inTime) {
+    public void setInPoint(double inTime) {
         currentInTime = inTime;
     }
 
@@ -91,7 +89,7 @@ public class FileQueue {
      *
      * @param outTime
      */
-    public void setOutPoint(int outTime) {
+    public void setOutPoint(double outTime) {
         currentOutTime = outTime;
     }
 
@@ -101,8 +99,16 @@ public class FileQueue {
     public void saveTrack() {
         try {
             PreparedStatement trackSave = dbConn.prepareStatement("UPDATE tbl_files SET File_Fadein = ?, File_Fadeout = ? WHERE File_ID = ?");
-            trackSave.setInt(1, currentInTime);
-            trackSave.setInt(2, currentOutTime);
+            if (currentInTime == 0) {
+                trackSave.setNull(1, Types.NUMERIC);
+            } else {
+                trackSave.setDouble(1, currentInTime);
+            }
+            if (currentOutTime == 0) {
+                trackSave.setNull(2, Types.NUMERIC);
+            } else {
+                trackSave.setDouble(2, currentOutTime);
+            }
             trackSave.setInt(3, currentTrackID);
             trackSave.execute();
             trackSave.close();
@@ -110,7 +116,7 @@ public class FileQueue {
             System.out.println("Failed to save track ID " + currentTrackID + " (" + analysisFiles.get(currentTrackID) + ")");
             System.out.println(ex.toString());
         }
-        analysisIDs.remove(currentTrackID);
+        analysisIDs.remove(analysisIDs.indexOf(currentTrackID));
         analysisFiles.remove(currentTrackID);
     }
 }

@@ -88,6 +88,14 @@ public class FuseAlysis {
 
         // Initialise the analyser and queue
         FileAnalyser fa = new FileAnalyser(directoryBase, inVol, outVol);
+        if (!fa.getInitStatus()) {
+            try {
+                mysqlConn.close();
+            } catch (SQLException ex) {
+                // Do nothing
+            }
+            System.exit(0);
+        }
         FileQueue fq = new FileQueue(mysqlConn);
         
         System.out.println("FuseAlysis successfully initialised...");
@@ -110,8 +118,14 @@ public class FuseAlysis {
                 System.out.println("Currently analysing " + directoryBase + currentTrack);
                 fq.setInPoint(fa.getInTime(currentTrack));
                 fq.setOutPoint(fa.getOutTime(currentTrack));
-                //fq.saveTrack();
+                fq.saveTrack();
                 System.out.println("Saving settings for " + directoryBase + currentTrack);
+                
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ex) {
+                    System.out.println("Sleep failed!");
+                }
             }
 
             // Sleep for a minute (default) before checking for more tracks
