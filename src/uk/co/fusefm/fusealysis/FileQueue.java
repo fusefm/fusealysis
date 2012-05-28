@@ -16,6 +16,7 @@ public class FileQueue {
     private double currentInTime, currentOutTime;
     private HashMap<Integer, String> analysisFiles;
     private ArrayList<Integer> analysisIDs;
+    private boolean connStatus;
 
     /**
      * @param db Database connection instance
@@ -24,6 +25,7 @@ public class FileQueue {
         dbConn = db;
         analysisFiles = new HashMap();
         analysisIDs = new ArrayList();
+        connStatus = true;
     }
 
     /**
@@ -50,6 +52,7 @@ public class FileQueue {
             System.out.println(ex.toString());
             return false;
         }
+        connStatus = true;
         return true;
     }
 
@@ -59,6 +62,10 @@ public class FileQueue {
      * @return
      */
     public boolean hasNext() {
+        if (!connStatus) {
+            // Connection likely failed
+            return false;
+        }
         return !analysisIDs.isEmpty();
     }
 
@@ -120,6 +127,7 @@ public class FileQueue {
         } catch (SQLException ex) {
             System.out.println("Failed to save track ID " + currentTrackID + " (" + analysisFiles.get(currentTrackID) + ")");
             System.out.println(ex.toString());
+            connStatus = false;
         }
         analysisIDs.remove(analysisIDs.indexOf(currentTrackID));
         analysisFiles.remove(currentTrackID);
