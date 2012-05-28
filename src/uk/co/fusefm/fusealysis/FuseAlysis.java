@@ -2,7 +2,6 @@ package uk.co.fusefm.fusealysis;
 
 import java.sql.*;
 
-
 /**
  * Analysis daemon accompanying Fusic. Monitors uploaded files and analyses
  * their tops and tails, before recording this data in MySQL
@@ -60,8 +59,8 @@ public class FuseAlysis {
             System.out.println("No base directory specified. Exiting");
             System.exit(0);
         }
-        
-        directoryBase = directoryBase.replace("\\","/");
+
+        directoryBase = directoryBase.replace("\\", "/");
         if (!directoryBase.endsWith("/")) {
             directoryBase += "/";
         }
@@ -74,7 +73,6 @@ public class FuseAlysis {
         }
 
         // Get in and out volumes, and check frequency from the server
-        // TODO: Get file types which are songs. Currently hard coding song type
         refreshSettings();
         if (inVol == 0 && outVol == 0) {
             System.out.println("Could not get in and out volume settings from MySQL server. Exiting");
@@ -97,7 +95,7 @@ public class FuseAlysis {
             System.exit(0);
         }
         FileQueue fq = new FileQueue(mysqlConn);
-        
+
         System.out.println("FuseAlysis successfully initialised...");
 
         while (true) {
@@ -120,16 +118,10 @@ public class FuseAlysis {
                 fq.setOutPoint(fa.getOutTime(currentTrack));
                 fq.saveTrack();
                 System.out.println("Saving settings for " + directoryBase + currentTrack);
-                
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ex) {
-                    System.out.println("Sleep failed!");
-                }
             }
 
             // Sleep for a minute (default) before checking for more tracks
-            System.out.println("All done! Waiting for " + checkFrequency + " minutes...");
+            System.out.println("All done! Waiting for " + checkFrequency + " minute(s)...");
             try {
                 Thread.sleep(checkFrequency * 60000);
             } catch (InterruptedException ex) {
@@ -147,6 +139,9 @@ public class FuseAlysis {
                 System.exit(0);
             }
             fa.updateSettings(inVol, outVol);
+
+            //TODO: Remove after testing
+            System.exit(0);
         }
     }
 

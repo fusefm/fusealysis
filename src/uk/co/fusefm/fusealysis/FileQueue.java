@@ -36,9 +36,8 @@ public class FileQueue {
         analysisIDs.clear();
         try {
             PreparedStatement tracks = dbConn.prepareStatement("SELECT File_ID,"
-                    + "File_Location FROM tbl_files WHERE File_Type = 'S' AND "
-                    + "(File_Fadein is null OR File_Fadeout is null) ORDER BY "
-                    + "File_ID ASC");
+                    + "File_Location FROM tbl_files WHERE (File_Fadein is null "
+                    + "OR File_Fadeout is null) ORDER BY File_ID ASC");
             ResultSet trackList = tracks.executeQuery();
             while (trackList.next()) {
                 // Remove the x:\ from the start of the track! Also format differently
@@ -98,20 +97,26 @@ public class FileQueue {
      */
     public void saveTrack() {
         try {
-            PreparedStatement trackSave = dbConn.prepareStatement("UPDATE tbl_files SET File_Fadein = ?, File_Fadeout = ? WHERE File_ID = ?");
-            if (currentInTime == 0) {
-                trackSave.setNull(1, Types.NUMERIC);
+            if (currentInTime > currentOutTime) {
+                System.out.println("Out time occurs before in time. Invalid. Skipping save");
+            } else if (currentInTime < 0 || currentOutTime < 0) {
+                System.out.println("In or out time is negative. Invalid. Skipping save");
             } else {
-                trackSave.setDouble(1, currentInTime);
+                PreparedStatement trackSave = dbConn.prepareStatement("UPDATE tbl_files SET File_Fadein = ?, File_Fadeout = ? WHERE File_ID = ?");
+                if (currentInTime == 0) {
+                    trackSave.setNull(1, Types.NUMERIC);
+                } else {
+                    trackSave.setDouble(1, currentInTime);
+                }
+                if (currentOutTime == 0) {
+                    trackSave.setNull(2, Types.NUMERIC);
+                } else {
+                    trackSave.setDouble(2, currentOutTime);
+                }
+                trackSave.setInt(3, currentTrackID);
+                trackSave.execute();
+                trackSave.close();
             }
-            if (currentOutTime == 0) {
-                trackSave.setNull(2, Types.NUMERIC);
-            } else {
-                trackSave.setDouble(2, currentOutTime);
-            }
-            trackSave.setInt(3, currentTrackID);
-            trackSave.execute();
-            trackSave.close();
         } catch (SQLException ex) {
             System.out.println("Failed to save track ID " + currentTrackID + " (" + analysisFiles.get(currentTrackID) + ")");
             System.out.println(ex.toString());

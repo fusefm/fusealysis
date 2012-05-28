@@ -1,15 +1,10 @@
 package uk.co.fusefm.fusealysis;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import jouvieje.bass.Bass;
 import jouvieje.bass.BassInit;
-import jouvieje.bass.structures.HSTREAM;
-import jouvieje.bass.defines.BASS_ACTIVE;
-import jouvieje.bass.defines.BASS_DEVICE;
-import jouvieje.bass.defines.BASS_POS;
-import jouvieje.bass.defines.BASS_STREAM;
+import jouvieje.bass.defines.*;
 import jouvieje.bass.exceptions.BassException;
+import jouvieje.bass.structures.HSTREAM;
 
 /**
  * Analyses tracks' tops and tails using the BASS library
@@ -68,7 +63,7 @@ public class FileAnalyser {
      * @return
      */
     public double getInTime(String relativePath) {
-        return getTime(relativePath,false);
+        return getTime(relativePath, false);
     }
 
     /**
@@ -78,29 +73,41 @@ public class FileAnalyser {
      * @return
      */
     public double getOutTime(String relativePath) {
-        return getTime(relativePath,true);
+        return getTime(relativePath, true);
     }
-    
+
     private double getTime(String relativePath, boolean reverse) {
-        if (reverse) {
-            //TODO: Not yet implemented
-            return 0;
-        }
-        String extension = relativePath.substring(relativePath.lastIndexOf(".")+1,relativePath.length());
+        String extension = relativePath.substring(relativePath.lastIndexOf(".") + 1, relativePath.length());
         if (extension.equalsIgnoreCase("flac") || extension.equalsIgnoreCase("m4a")) {
+            //TODO: Support these
             System.out.println("FLAC and M4A currently unsupported.");
             return 0;
         }
         String fileLoc = baseDirectory + relativePath;
         double trackPos = 0;
-        HSTREAM stream = Bass.BASS_StreamCreateFile(false, fileLoc, BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
+        HSTREAM stream, revStream = null;
+        //if (extension.equalsIgnoreCase("flac")) {
+        //long javaResult = BassJNI.BASS_StreamCreateFile(false, fileLoc.getBytes(), BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
+        //Pointer point = new Pointer();
+        //stream = Bass.BASS_FLAC_StreamCreateURL(fileLoc, 0, BASS_STREAM.BASS_STREAM_AUTOFREE, null, null);
+        //stream = Bass.BASS_FLAC_StreamCreateFile(false, point.asPointer(javaResult), BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
+        //} else if (extension.equalsIgnoreCase("m4a")) {
+        //stream = Bass.BASS_StreamCreateFile(false, fileLoc, BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
+        //} else {
+        stream = Bass.BASS_StreamCreateFile(false, fileLoc, 0, 0, BASS_STREAM.BASS_STREAM_DECODE | BASS_STREAM.BASS_STREAM_PRESCAN | BASS_SAMPLE.BASS_SAMPLE_FX);
+        //}
         int errorCode = Bass.BASS_ErrorGetCode();
         if (errorCode != 0) {
             System.out.println("Error opening file " + fileLoc + " code " + errorCode);
-            System.exit(0);
+            return 0;
         }
         int streamID = stream.asInt();
+        if (reverse) {
+            revStream = Bass.BASS_FX_ReverseCreate(streamID, 2, BASS_STREAM.BASS_STREAM_DECODE | BASS_FX.BASS_FX_FREESOURCE);
+            streamID = revStream.asInt();
+        }
         Bass.BASS_ChannelPlay(streamID, true);
+        double trackLength = Bass.BASS_ChannelBytes2Seconds(streamID, Bass.BASS_ChannelGetLength(streamID, BASS_POS.BASS_POS_BYTE));
         while (Bass.BASS_ChannelIsActive(streamID) == BASS_ACTIVE.BASS_ACTIVE_PLAYING) {
             try {
                 Thread.sleep(5);
@@ -115,17 +122,26 @@ public class FileAnalyser {
             int channelLevel = Integer.parseInt(new StringBuffer(levelString.substring(0, 16)).reverse().toString(), 2);
             long bytePosition = Bass.BASS_ChannelGetPosition(streamID, BASS_POS.BASS_POS_BYTE);
             double currentPos = Bass.BASS_ChannelBytes2Seconds(streamID, bytePosition);
-            if (currentPos > 10) {
-                System.out.println("Tried first 10 seconds, no audio found. Skipping...");
+            if (!reverse && currentPos > 15) {
+                System.out.println("Tried first 15 seconds, no audio found. Skipping...");
+                break;
+            } else if (reverse && (currentPos + 15) < trackLength) {
+                System.out.println("Tried last 15 seconds, no audio found. Skipping...");
                 break;
             }
-            if (channelLevel >= trackFrontVolume) {
+            if (!reverse && channelLevel >= trackFrontVolume) {
+                trackPos = currentPos;
+                break;
+            } else if (reverse && channelLevel >= trackBackVolume) {
                 trackPos = currentPos;
                 break;
             }
         }
         Bass.BASS_ChannelStop(streamID);
         Bass.BASS_StreamFree(stream);
+        if (reverse) {
+            Bass.BASS_StreamFree(revStream);
+        }
         return trackPos;
     }
 }
