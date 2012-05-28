@@ -128,8 +128,8 @@ public class FileAnalyser {
             if (!reverse && currentPos > 15) {
                 System.out.println("Tried first 15 seconds, no audio found. Skipping...");
                 break;
-            } else if (reverse && (currentPos + 15) < trackLength) {
-                System.out.println("Tried last 15 seconds, no audio found. Skipping...");
+            } else if (reverse && (currentPos + 30) < trackLength) {
+                System.out.println("Tried last 30 seconds, no audio found. Skipping...");
                 break;
             }
             if (!reverse && channelLevel >= trackFrontVolume) {
