@@ -6,7 +6,7 @@ package uk.co.fusefm.fusealysis;
  */
 public class FileAnalyser {
     private final String baseDirectory;
-    private final int trackFrontVolume, trackBackVolume;
+    private int trackFrontVolume, trackBackVolume;
     
     /**
      * @param baseDir Base directory for tracks to analyse
@@ -19,13 +19,18 @@ public class FileAnalyser {
         trackBackVolume = backVol;
     }
     
+    public void updateSettings(int frontVol, int backVol) {
+        trackFrontVolume = frontVol;
+        trackBackVolume = backVol;
+    }
+    
     /**
      * Analyse the specified track and return its in time
      * @param relativePath
      * @return 
      */
     public int getInTime(String relativePath) {
-        
+        String fileLoc = baseDirectory + relativePath;
     }
     
     /**
@@ -34,6 +39,6 @@ public class FileAnalyser {
      * @return 
      */
     public int getOutTime(String relativePath) {
-        
+        String fileLoc = baseDirectory + relativePath;
     }
 }

@@ -15,6 +15,7 @@ public class FuseAlysis {
             mysqlDatabase = "playoutsystem", mysqlUsername = "playoutsystem",
             mysqlPassword = "", directoryBase = null;
     private static Connection mysqlConn;
+    private static int inVol = 0, outVol = 0, checkFrequency = 1;
 
     /**
      * @param args the command line arguments
@@ -59,6 +60,11 @@ public class FuseAlysis {
             System.out.println("No base directory specified. Exiting");
             System.exit(0);
         }
+        
+        directoryBase = directoryBase.replace("\\","/");
+        if (!directoryBase.endsWith("/")) {
+            directoryBase += "/";
+        }
 
         // Connect to the MySQL server
         doConnect();
@@ -67,48 +73,69 @@ public class FuseAlysis {
             System.exit(0);
         }
 
-        // Get in and out volumes from the server
-        int inVol = 0, outVol = 0;
-        try {
-            PreparedStatement inOutLevels = mysqlConn.prepareStatement("");
-            ResultSet executeQuery = inOutLevels.executeQuery();
-        } catch (SQLException ex) {
-            System.out.println("Could not get in and out volume settings from MySQL server. Exiting");
-            System.out.println(ex.toString());
-            System.exit(0);
-        }
+        // Get in and out volumes, and check frequency from the server
+        // TODO: Get file types which are songs. Currently hard coding song type
+        refreshSettings();
         if (inVol == 0 && outVol == 0) {
             System.out.println("Could not get in and out volume settings from MySQL server. Exiting");
+            try {
+                mysqlConn.close();
+            } catch (SQLException ex) {
+                // Do nothing
+            }
             System.exit(0);
         }
 
         // Initialise the analyser and queue
         FileAnalyser fa = new FileAnalyser(directoryBase, inVol, outVol);
         FileQueue fq = new FileQueue(mysqlConn);
+        
+        System.out.println("FuseAlysis successfully initialised...");
 
         while (true) {
             // Populate the queue
-            if (!fq.populateAnalysisList()) {
+            System.out.println("Updating directory listing...");
+            while (!fq.populateAnalysisList()) {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ex) {
+                    System.out.println("Sleep failed!");
+                }
                 doConnect();
             }
 
             // While more tracks are available, analyse them
             while (fq.hasNext()) {
                 String currentTrack = fq.next();
+                System.out.println("Currently analysing " + directoryBase + currentTrack);
                 fq.setInPoint(fa.getInTime(currentTrack));
                 fq.setOutPoint(fa.getOutTime(currentTrack));
-                fq.saveTrack();
+                //fq.saveTrack();
+                System.out.println("Saving settings for " + directoryBase + currentTrack);
             }
-            
-            // Sleep for a minute before checking for more tracks
+
+            // Sleep for a minute (default) before checking for more tracks
+            System.out.println("All done! Waiting for " + checkFrequency + " minutes...");
             try {
-                Thread.sleep(60000);
+                Thread.sleep(checkFrequency * 60000);
             } catch (InterruptedException ex) {
                 System.out.println("Sleep failed!");
             }
+
+            refreshSettings();
+            if (inVol == 0 && outVol == 0) {
+                System.out.println("Could not get in and out volume settings from MySQL server. Exiting");
+                try {
+                    mysqlConn.close();
+                } catch (SQLException ex) {
+                    // Do nothing
+                }
+                System.exit(0);
+            }
+            fa.updateSettings(inVol, outVol);
         }
     }
-    
+
     private static void doConnect() {
         mysqlConn = null;
         try {
@@ -116,6 +143,36 @@ public class FuseAlysis {
                     + "user=" + mysqlUsername + "&password=" + mysqlPassword);
         } catch (SQLException ex) {
             System.out.println("MySQL connection failed. Exiting");
+            System.out.println(ex.toString());
+            System.exit(0);
+        }
+    }
+
+    private static void refreshSettings() {
+        try {
+            PreparedStatement inOutLevels = mysqlConn.prepareStatement("SELECT "
+                    + "Setting_Name,Setting_Value FROM tbl_settings WHERE "
+                    + "Setting_Name = 'analysis_daemon_frequency_minutes' "
+                    + "OR Setting_Name = 'fade_in_detection_level' OR "
+                    + "Setting_Name = 'fade_out_detection_level'");
+            ResultSet inOutResults = inOutLevels.executeQuery();
+            while (inOutResults.next()) {
+                switch (inOutResults.getString("Setting_Name")) {
+                    case "analysis_daemon_frequency_minutes":
+                        checkFrequency = inOutResults.getInt("Setting_Value");
+                        break;
+                    case "fade_in_detection_level":
+                        inVol = inOutResults.getInt("Setting_Value");
+                        break;
+                    case "fade_out_detection_level":
+                        outVol = inOutResults.getInt("Setting_Value");
+                        break;
+                }
+            }
+            inOutResults.close();
+            inOutLevels.close();
+        } catch (SQLException ex) {
+            System.out.println("Could not get in and out volume settings from MySQL server. Exiting");
             System.out.println(ex.toString());
             System.exit(0);
         }
