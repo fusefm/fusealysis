@@ -119,6 +119,9 @@ public class FileAnalyser {
                 continue;
             }
             String levelString = Integer.toBinaryString(bassLevel);
+            if (levelString.length() < 16) {
+                continue;
+            }
             int channelLevel = Integer.parseInt(new StringBuffer(levelString.substring(0, 16)).reverse().toString(), 2);
             long bytePosition = Bass.BASS_ChannelGetPosition(streamID, BASS_POS.BASS_POS_BYTE);
             double currentPos = Bass.BASS_ChannelBytes2Seconds(streamID, bytePosition);
