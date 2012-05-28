@@ -139,9 +139,6 @@ public class FuseAlysis {
                 System.exit(0);
             }
             fa.updateSettings(inVol, outVol);
-
-            //TODO: Remove after testing
-            System.exit(0);
         }
     }
 
