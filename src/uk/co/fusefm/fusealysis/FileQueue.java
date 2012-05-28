@@ -97,7 +97,7 @@ public class FileQueue {
      */
     public void saveTrack() {
         try {
-            if (currentInTime > currentOutTime) {
+            if (currentInTime > currentOutTime && currentOutTime != 0) {
                 System.out.println("Out time occurs before in time. Invalid. Skipping save");
             } else if (currentInTime < 0 || currentOutTime < 0) {
                 System.out.println("In or out time is negative. Invalid. Skipping save");
