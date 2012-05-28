@@ -1,3 +1,5 @@
 Fusealysis
 
 Music analysis daemon for Fusic
+
+Requires the MySQL J Connector and NativeBass (http://jerome.jouvie.free.fr/nativebass/index.php)
