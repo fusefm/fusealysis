@@ -75,8 +75,8 @@ public class FileQueue {
      * @return
      */
     public String next() {
-        currentInTime = 0;
-        currentOutTime = 0;
+        currentInTime = -1;
+        currentOutTime = -1;
         currentTrackID = analysisIDs.get(0);
         return analysisFiles.get(currentTrackID);
     }
@@ -110,11 +110,7 @@ public class FileQueue {
                 System.out.println("In or out time is negative. Invalid. Skipping save");
             } else {
                 PreparedStatement trackSave = dbConn.prepareStatement("UPDATE tbl_files SET File_Fadein = ?, File_Fadeout = ? WHERE File_ID = ?");
-                if (currentInTime == 0) {
-                    trackSave.setNull(1, Types.NUMERIC);
-                } else {
-                    trackSave.setDouble(1, currentInTime);
-                }
+                trackSave.setDouble(1, currentInTime);
                 if (currentOutTime == 0) {
                     trackSave.setNull(2, Types.NUMERIC);
                 } else {
