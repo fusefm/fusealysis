@@ -81,7 +81,7 @@ public class FileAnalyser {
         if (extension.equalsIgnoreCase("flac") || extension.equalsIgnoreCase("m4a")) {
             //TODO: Support these
             System.out.println("FLAC and M4A currently unsupported.");
-            return 0;
+            return -1;
         }
         String fileLoc = baseDirectory + relativePath;
         double trackPos = 0;
@@ -99,7 +99,7 @@ public class FileAnalyser {
         int errorCode = Bass.BASS_ErrorGetCode();
         if (errorCode != 0) {
             System.out.println("Error opening file " + fileLoc + " code " + errorCode);
-            return 0;
+            return -1;
         }
         int streamID = stream.asInt();
         if (reverse) {
