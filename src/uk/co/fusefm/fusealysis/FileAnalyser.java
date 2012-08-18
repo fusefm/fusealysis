@@ -1,5 +1,6 @@
 package uk.co.fusefm.fusealysis;
 
+import java.io.File;
 import jouvieje.bass.Bass;
 import jouvieje.bass.BassInit;
 import jouvieje.bass.defines.*;
@@ -86,16 +87,15 @@ public class FileAnalyser {
         String fileLoc = baseDirectory + relativePath;
         double trackPos = 0;
         HSTREAM stream, revStream = null;
-        //if (extension.equalsIgnoreCase("flac")) {
-        //long javaResult = BassJNI.BASS_StreamCreateFile(false, fileLoc.getBytes(), BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
-        //Pointer point = new Pointer();
-        //stream = Bass.BASS_FLAC_StreamCreateURL(fileLoc, 0, BASS_STREAM.BASS_STREAM_AUTOFREE, null, null);
-        //stream = Bass.BASS_FLAC_StreamCreateFile(false, point.asPointer(javaResult), BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
-        //} else if (extension.equalsIgnoreCase("m4a")) {
-        //stream = Bass.BASS_StreamCreateFile(false, fileLoc, BASS_STREAM.BASS_STREAM_AUTOFREE, 0, 0);
-        //} else {
-        stream = Bass.BASS_StreamCreateFile(false, fileLoc, 0, 0, BASS_STREAM.BASS_STREAM_DECODE | BASS_STREAM.BASS_STREAM_PRESCAN | BASS_SAMPLE.BASS_SAMPLE_FX);
-        //}
+        if (extension.equalsIgnoreCase("flac")) {
+            // Not yet implemented
+            stream = Bass.BASS_StreamCreateFile(false, fileLoc, 0, 0, BASS_STREAM.BASS_STREAM_DECODE | BASS_STREAM.BASS_STREAM_PRESCAN | BASS_SAMPLE.BASS_SAMPLE_FX);
+        } else if (extension.equalsIgnoreCase("m4a")) {
+            // Not yet implemented
+            stream = Bass.BASS_StreamCreateFile(false, fileLoc, 0, 0, BASS_STREAM.BASS_STREAM_DECODE | BASS_STREAM.BASS_STREAM_PRESCAN | BASS_SAMPLE.BASS_SAMPLE_FX);
+        } else {
+            stream = Bass.BASS_StreamCreateFile(false, fileLoc, 0, 0, BASS_STREAM.BASS_STREAM_DECODE | BASS_STREAM.BASS_STREAM_PRESCAN | BASS_SAMPLE.BASS_SAMPLE_FX);
+        }
         int errorCode = Bass.BASS_ErrorGetCode();
         if (errorCode != 0) {
             System.out.println("Error opening file " + fileLoc + " code " + errorCode);

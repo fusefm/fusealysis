@@ -39,7 +39,7 @@ public class FileQueue {
         try {
             PreparedStatement tracks = dbConn.prepareStatement("SELECT File_ID,"
                     + "File_Location FROM tbl_files WHERE (File_Fadein is null "
-                    + "OR File_Fadeout is null) ORDER BY File_ID ASC");
+                    + "OR File_Fadeout is null) ORDER BY File_ID DESC");
             ResultSet trackList = tracks.executeQuery();
             while (trackList.next()) {
                 // Remove the x:\ from the start of the track! Also format differently

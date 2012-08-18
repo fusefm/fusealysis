@@ -48,6 +48,10 @@ public class FuseAlysis {
                     directoryBase = args[i + 1];
                     i++;
                     break;
+                case "-f":
+                    checkFrequency = Integer.parseInt(args[i + 1]);
+                    i++;
+                    break;
             }
         }
 
